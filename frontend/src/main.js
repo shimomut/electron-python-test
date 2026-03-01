@@ -86,9 +86,9 @@ function stopPythonBackend() {
 function createWindow() {
   // Create the browser window
   mainWindow = new BrowserWindow({
-    width: 800,
+    width: 1000,
     height: 600,
-    title: 'Hello World App',
+    title: 'Demo Explorer',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
