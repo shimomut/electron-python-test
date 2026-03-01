@@ -1,9 +1,31 @@
 const { app, BrowserWindow, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 let pythonProcess = null;
 let mainWindow = null;
+let config = null;
+
+/**
+ * Load configuration from config.json
+ */
+function loadConfig() {
+  try {
+    const configPath = path.join(__dirname, '..', '..', 'config.json');
+    const configData = fs.readFileSync(configPath, 'utf8');
+    config = JSON.parse(configData);
+    console.log(`Configuration loaded: Backend will use ${config.backend.host}:${config.backend.port}`);
+  } catch (error) {
+    console.error('Failed to load config.json, using defaults:', error);
+    config = {
+      backend: {
+        host: '127.0.0.1',
+        port: 10123
+      }
+    };
+  }
+}
 
 /**
  * Spawns the Python backend process
@@ -88,6 +110,9 @@ function createWindow() {
 // App lifecycle events
 
 app.whenReady().then(() => {
+  // Load configuration first
+  loadConfig();
+  
   // Start Python backend first
   startPythonBackend();
   

@@ -1,14 +1,35 @@
 // Renderer process for Hello World Electron + Python application
 // Handles HTTP communication with Python backend and UI updates
 
+// Load configuration
+const fs = require('fs');
+const path = require('path');
+
+let config = null;
+try {
+    const configPath = path.join(__dirname, '..', '..', 'config.json');
+    const configData = fs.readFileSync(configPath, 'utf8');
+    config = JSON.parse(configData);
+} catch (error) {
+    console.error('Failed to load config.json, using defaults:', error);
+    config = {
+        backend: {
+            host: '127.0.0.1',
+            port: 10123
+        }
+    };
+}
+
+const backendUrl = `http://${config.backend.host}:${config.backend.port}`;
+
 /**
  * Fetches greeting message from Python backend
  * @returns {Promise<string>} The message from backend or error message
  */
 async function fetchBackendMessage() {
     try {
-        console.log('Fetching message from backend...');
-        const response = await fetch('http://localhost:5000/api/hello');
+        console.log(`Fetching message from backend at ${backendUrl}...`);
+        const response = await fetch(`${backendUrl}/api/hello`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
