@@ -95,106 +95,73 @@ function switchDemo(demoId) {
  * Handles button click events in the buttons demo
  * @param {string} buttonType - The type of button clicked
  */
-function handleButtonClick(buttonType) {
+async function handleButtonClick(buttonType) {
     const output = document.getElementById('button-output');
     const timestamp = new Date().toLocaleTimeString();
-    output.textContent = `${buttonType} button clicked at ${timestamp}`;
+    
+    output.textContent = `Sending ${buttonType} button click to backend...`;
     console.log(`Button clicked: ${buttonType}`);
+    
+    try {
+        const response = await fetch(`${backendUrl}/api/button-click`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                buttonType: buttonType,
+                timestamp: timestamp
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        output.textContent = `${data.message} at ${timestamp}`;
+        console.log('Backend response:', data);
+        
+    } catch (error) {
+        console.error('Failed to send button click to backend:', error);
+        output.textContent = `Error: Failed to communicate with backend`;
+    }
 }
 
 // Make handleButtonClick available globally for onclick handlers
 window.handleButtonClick = handleButtonClick;
 
-// File browser data structure
-const fileSystem = {
-    name: 'Root',
-    type: 'folder',
-    children: [
-        {
-            name: 'Documents',
-            type: 'folder',
-            children: [
-                {
-                    name: 'Work',
-                    type: 'folder',
-                    children: [
-                        { name: 'report.pdf', type: 'file' },
-                        { name: 'presentation.pptx', type: 'file' },
-                        { name: 'budget.xlsx', type: 'file' }
-                    ]
-                },
-                {
-                    name: 'Personal',
-                    type: 'folder',
-                    children: [
-                        { name: 'resume.pdf', type: 'file' },
-                        { name: 'cover-letter.docx', type: 'file' }
-                    ]
-                },
-                { name: 'notes.txt', type: 'file' },
-                { name: 'todo.md', type: 'file' }
-            ]
-        },
-        {
-            name: 'Pictures',
-            type: 'folder',
-            children: [
-                {
-                    name: 'Vacation',
-                    type: 'folder',
-                    children: [
-                        { name: 'beach.jpg', type: 'file' },
-                        { name: 'sunset.jpg', type: 'file' },
-                        { name: 'mountains.jpg', type: 'file' }
-                    ]
-                },
-                {
-                    name: 'Family',
-                    type: 'folder',
-                    children: [
-                        { name: 'reunion.jpg', type: 'file' },
-                        { name: 'birthday.jpg', type: 'file' }
-                    ]
-                },
-                { name: 'profile.png', type: 'file' }
-            ]
-        },
-        {
-            name: 'Projects',
-            type: 'folder',
-            children: [
-                {
-                    name: 'WebApp',
-                    type: 'folder',
-                    children: [
-                        { name: 'index.html', type: 'file' },
-                        { name: 'styles.css', type: 'file' },
-                        { name: 'app.js', type: 'file' }
-                    ]
-                },
-                {
-                    name: 'MobileApp',
-                    type: 'folder',
-                    children: [
-                        { name: 'main.dart', type: 'file' },
-                        { name: 'config.yaml', type: 'file' }
-                    ]
-                }
-            ]
-        },
-        {
-            name: 'Downloads',
-            type: 'folder',
-            children: [
-                { name: 'installer.dmg', type: 'file' },
-                { name: 'document.pdf', type: 'file' },
-                { name: 'archive.zip', type: 'file' }
-            ]
-        }
-    ]
-};
-
+// File browser state
 let currentPath = [];
+let fileCache = {};
+
+/**
+ * Fetches files from Python backend for the given path
+ * @param {string} path - The path to fetch files from
+ * @returns {Promise<Array>} Array of file/folder objects
+ */
+async function fetchFiles(path = '.') {
+    try {
+        console.log(`Fetching files from backend for path: ${path}`);
+        const response = await fetch(`${backendUrl}/api/files?path=${encodeURIComponent(path)}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Backend file response:', data);
+        
+        if (data.status === 'success') {
+            return data.items;
+        } else {
+            throw new Error(data.message || 'Failed to fetch files');
+        }
+    } catch (error) {
+        console.error('Failed to fetch files from backend:', error);
+        return [];
+    }
+}
 
 /**
  * Renders a column of files/folders
@@ -206,10 +173,20 @@ function renderColumn(items, columnIndex) {
     column.className = 'file-column';
     column.dataset.columnIndex = columnIndex;
     
-    items.forEach((item, index) => {
+    if (items.length === 0) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'file-item';
+        emptyMessage.style.color = '#999';
+        emptyMessage.style.fontStyle = 'italic';
+        emptyMessage.textContent = 'Empty folder';
+        column.appendChild(emptyMessage);
+        return column;
+    }
+    
+    items.forEach((item) => {
         const fileItem = document.createElement('div');
         fileItem.className = 'file-item';
-        if (item.children) {
+        if (item.type === 'folder') {
             fileItem.classList.add('has-children');
         }
         
@@ -239,7 +216,7 @@ function renderColumn(items, columnIndex) {
  * @param {number} columnIndex - Index of the column containing the item
  * @param {HTMLElement} element - The clicked DOM element
  */
-function handleFileClick(item, columnIndex, element) {
+async function handleFileClick(item, columnIndex, element) {
     // Remove selection from all items in this column
     const column = element.parentElement;
     column.querySelectorAll('.file-item').forEach(el => {
@@ -262,9 +239,12 @@ function handleFileClick(item, columnIndex, element) {
         }
     });
     
-    // If item has children, add a new column
-    if (item.children && item.children.length > 0) {
-        const newColumn = renderColumn(item.children, columnIndex + 1);
+    // If item is a folder, fetch its contents and add a new column
+    if (item.type === 'folder') {
+        const folderPath = item.path;
+        const children = await fetchFiles(folderPath);
+        
+        const newColumn = renderColumn(children, columnIndex + 1);
         columnsContainer.appendChild(newColumn);
     }
     
@@ -280,25 +260,29 @@ function handleFileClick(item, columnIndex, element) {
 function updatePathDisplay() {
     const pathElement = document.getElementById('file-path');
     if (currentPath.length === 0) {
-        pathElement.textContent = 'Root';
+        pathElement.textContent = 'Project Root';
     } else {
-        pathElement.textContent = 'Root / ' + currentPath.join(' / ');
+        pathElement.textContent = 'Project Root / ' + currentPath.join(' / ');
     }
 }
 
 /**
  * Initializes the file browser with root items
  */
-function initFileBrowser() {
+async function initFileBrowser() {
     const columnsContainer = document.getElementById('file-columns');
-    columnsContainer.innerHTML = '';
+    columnsContainer.innerHTML = '<div style="padding: 20px; color: #999;">Loading files...</div>';
     currentPath = [];
+    fileCache = {};
     
-    const rootColumn = renderColumn(fileSystem.children, 0);
+    const rootItems = await fetchFiles('.');
+    
+    columnsContainer.innerHTML = '';
+    const rootColumn = renderColumn(rootItems, 0);
     columnsContainer.appendChild(rootColumn);
     
     updatePathDisplay();
-    console.log('File browser initialized');
+    console.log('File browser initialized with real files from backend');
 }
 
 // Initialize demo navigation
