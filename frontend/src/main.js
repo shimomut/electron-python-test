@@ -3,6 +3,9 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+// Set application name for menu bar (must be before app.ready)
+app.setName('Demo Explorer');
+
 let pythonProcess = null;
 let mainWindow = null;
 let config = null;
