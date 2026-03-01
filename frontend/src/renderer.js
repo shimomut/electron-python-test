@@ -411,7 +411,7 @@ function createChart(canvasId, label, borderColor, backgroundColor) {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
-                duration: 750
+                duration: 0
             },
             scales: {
                 y: {
