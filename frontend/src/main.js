@@ -46,8 +46,16 @@ function startPythonBackend() {
   });
   
   // Log stderr from Python process
+  // Note: Python logging writes to stderr by default, so not all stderr is errors
   pythonProcess.stderr.on('data', (data) => {
-    console.error(`Python Backend Error: ${data.toString().trim()}`);
+    const message = data.toString().trim();
+    // Check if it's actually an error or just logging output
+    if (message.includes('ERROR') || message.includes('Traceback') || message.includes('Exception')) {
+      console.error(`Python Backend Error: ${message}`);
+    } else {
+      // It's just normal logging output (INFO, WARNING, etc.)
+      console.log(`Python Backend: ${message}`);
+    }
   });
   
   // Handle process exit
