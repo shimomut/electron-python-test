@@ -22,11 +22,30 @@
         }
         .explorer-pane {
             width: 250px;
+            min-width: 150px;
+            max-width: 500px;
             background-color: #2c2c2c;
             color: #ffffff;
             display: flex;
             flex-direction: column;
             border-right: 1px solid #1a1a1a;
+            position: relative;
+        }
+        .resize-handle {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            cursor: col-resize;
+            background-color: transparent;
+            z-index: 10;
+        }
+        .resize-handle:hover {
+            background-color: #0066cc;
+        }
+        .resize-handle.resizing {
+            background-color: #0066cc;
         }
         .explorer-header {
             padding: 15px;
@@ -397,7 +416,8 @@
 </head>
 <body>
     <div class="app-container">
-        <div class="explorer-pane">
+        <div class="explorer-pane" id="explorer-pane">
+            <div class="resize-handle" id="resize-handle"></div>
             <div class="explorer-header">Demos</div>
             <div class="demo-list">
                 <div class="demo-item active" data-demo="hello-world">

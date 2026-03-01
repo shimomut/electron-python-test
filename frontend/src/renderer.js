@@ -131,6 +131,54 @@ async function handleButtonClick(buttonType) {
 // Make handleButtonClick available globally for onclick handlers
 window.handleButtonClick = handleButtonClick;
 
+// Explorer pane resize functionality
+let isResizing = false;
+let startX = 0;
+let startWidth = 0;
+
+/**
+ * Initializes the explorer pane resize functionality
+ */
+function initExplorerResize() {
+    const resizeHandle = document.getElementById('resize-handle');
+    const explorerPane = document.getElementById('explorer-pane');
+    
+    resizeHandle.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        startX = e.clientX;
+        startWidth = explorerPane.offsetWidth;
+        resizeHandle.classList.add('resizing');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        e.preventDefault();
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        
+        const delta = e.clientX - startX;
+        const newWidth = startWidth + delta;
+        
+        // Enforce min and max width
+        const minWidth = 150;
+        const maxWidth = 500;
+        const constrainedWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+        
+        explorerPane.style.width = `${constrainedWidth}px`;
+    });
+    
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            resizeHandle.classList.remove('resizing');
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
+    
+    console.log('Explorer pane resize initialized');
+}
+
 // File browser state
 let currentPath = [];
 let fileCache = {};
@@ -633,6 +681,9 @@ function cleanupLogs() {
 // Initialize demo navigation
 window.addEventListener('load', async () => {
     console.log('Window loaded, initializing demos...');
+    
+    // Initialize explorer pane resize
+    initExplorerResize();
     
     // Set up demo navigation
     const demoItems = document.querySelectorAll('.demo-item');
