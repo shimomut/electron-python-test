@@ -285,6 +285,161 @@ async function initFileBrowser() {
     console.log('File browser initialized with real files from backend');
 }
 
+// Charts demo state
+let charts = {};
+let chartUpdateInterval = null;
+
+/**
+ * Creates a Chart.js line chart
+ * @param {string} canvasId - ID of the canvas element
+ * @param {string} label - Label for the dataset
+ * @param {string} borderColor - Color of the line
+ * @param {string} backgroundColor - Background color
+ * @returns {Chart} Chart.js instance
+ */
+function createChart(canvasId, label, borderColor, backgroundColor) {
+    const ctx = document.getElementById(canvasId);
+    return new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: label,
+                data: [],
+                borderColor: borderColor,
+                backgroundColor: backgroundColor,
+                borderWidth: 2,
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 750
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+/**
+ * Fetches time series data from Python backend
+ * @returns {Promise<Object>} Time series data
+ */
+async function fetchTimeSeriesData() {
+    try {
+        const response = await fetch(`${backendUrl}/api/timeseries`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            return data.data;
+        } else {
+            throw new Error(data.message || 'Failed to fetch time series data');
+        }
+    } catch (error) {
+        console.error('Failed to fetch time series data:', error);
+        return null;
+    }
+}
+
+/**
+ * Updates all charts with new data
+ * @param {Object} data - Time series data from backend
+ */
+function updateCharts(data) {
+    if (!data) return;
+    
+    // Update CPU chart
+    charts.cpu.data.labels = data.labels;
+    charts.cpu.data.datasets[0].data = data.cpu;
+    charts.cpu.update();
+    
+    // Update Memory chart
+    charts.memory.data.labels = data.labels;
+    charts.memory.data.datasets[0].data = data.memory;
+    charts.memory.update();
+    
+    // Update Network chart
+    charts.network.data.labels = data.labels;
+    charts.network.data.datasets[0].data = data.network;
+    charts.network.update();
+    
+    // Update Requests chart
+    charts.requests.data.labels = data.labels;
+    charts.requests.data.datasets[0].data = data.requests;
+    charts.requests.update();
+    
+    // Update status
+    const statusElement = document.getElementById('update-status');
+    const now = new Date();
+    statusElement.textContent = `Last updated: ${now.toLocaleTimeString()} (updates every 5 seconds)`;
+}
+
+/**
+ * Initializes the charts demo
+ */
+async function initCharts() {
+    console.log('Initializing charts demo...');
+    
+    // Create charts
+    charts.cpu = createChart('cpu-chart', 'CPU Usage', 'rgb(54, 162, 235)', 'rgba(54, 162, 235, 0.1)');
+    charts.memory = createChart('memory-chart', 'Memory Usage', 'rgb(255, 99, 132)', 'rgba(255, 99, 132, 0.1)');
+    charts.network = createChart('network-chart', 'Network Traffic', 'rgb(75, 192, 192)', 'rgba(75, 192, 192, 0.1)');
+    charts.requests = createChart('requests-chart', 'Request Rate', 'rgb(255, 159, 64)', 'rgba(255, 159, 64, 0.1)');
+    
+    // Fetch initial data
+    const data = await fetchTimeSeriesData();
+    updateCharts(data);
+    
+    // Set up periodic updates
+    if (chartUpdateInterval) {
+        clearInterval(chartUpdateInterval);
+    }
+    
+    chartUpdateInterval = setInterval(async () => {
+        const data = await fetchTimeSeriesData();
+        updateCharts(data);
+    }, 5000);
+    
+    console.log('Charts initialized with 5-second update interval');
+}
+
+/**
+ * Cleans up charts demo
+ */
+function cleanupCharts() {
+    if (chartUpdateInterval) {
+        clearInterval(chartUpdateInterval);
+        chartUpdateInterval = null;
+    }
+    
+    // Destroy chart instances
+    Object.values(charts).forEach(chart => {
+        if (chart) {
+            chart.destroy();
+        }
+    });
+    charts = {};
+    
+    console.log('Charts cleaned up');
+}
+
 // Initialize demo navigation
 window.addEventListener('load', async () => {
     console.log('Window loaded, initializing demos...');
@@ -299,6 +454,14 @@ window.addEventListener('load', async () => {
             // Initialize file browser when switching to it
             if (demoId === 'file-browser') {
                 initFileBrowser();
+            }
+            
+            // Initialize charts when switching to it
+            if (demoId === 'charts') {
+                initCharts();
+            } else {
+                // Clean up charts when switching away
+                cleanupCharts();
             }
         });
     });
