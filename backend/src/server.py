@@ -222,6 +222,93 @@ def get_timeseries():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+# Log generation state
+log_counter = 0
+log_messages = [
+    "Starting application server",
+    "Database connection established",
+    "Loading configuration from config.json",
+    "Initializing worker threads",
+    "API endpoint registered: /api/hello",
+    "API endpoint registered: /api/timeseries",
+    "Cache warmed up successfully",
+    "Health check passed",
+    "Processing incoming request",
+    "Query executed successfully",
+    "Response sent to client",
+    "Background job started",
+    "Background job completed",
+    "Cleaning up temporary files",
+    "Memory usage: 45%",
+    "CPU usage: 32%",
+    "Active connections: 127",
+    "Request queue size: 5",
+    "Cache hit ratio: 89%",
+    "Database query took 23ms"
+]
+
+log_warnings = [
+    "High memory usage detected",
+    "Slow query detected: 450ms",
+    "Connection pool nearly exhausted",
+    "Retry attempt 2 of 3",
+    "Deprecated API usage detected"
+]
+
+log_errors = [
+    "Failed to connect to external service",
+    "Database connection timeout",
+    "Invalid request payload",
+    "Authentication failed for user",
+    "Rate limit exceeded"
+]
+
+
+@app.route('/api/logs', methods=['GET'])
+def get_logs():
+    """Generate synthetic log entries."""
+    try:
+        global log_counter
+        
+        # Generate 3-5 log entries per request
+        num_logs = random.randint(3, 5)
+        logs = []
+        
+        for _ in range(num_logs):
+            log_counter += 1
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())
+            
+            # Determine log level (80% info, 15% warn, 5% error)
+            rand = random.random()
+            if rand < 0.05:
+                level = 'ERROR'
+                message = random.choice(log_errors)
+            elif rand < 0.20:
+                level = 'WARN'
+                message = random.choice(log_warnings)
+            else:
+                level = 'INFO'
+                message = random.choice(log_messages)
+            
+            logs.append({
+                'id': log_counter,
+                'timestamp': timestamp,
+                'level': level,
+                'message': message
+            })
+        
+        logger.info(f"Generated {num_logs} log entries")
+        
+        return jsonify({
+            "status": "success",
+            "logs": logs
+        })
+        
+    except Exception as e:
+        logger.error(f"Error generating logs: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 def main():
     """Start the Flask server."""
     host = config['backend']['host']

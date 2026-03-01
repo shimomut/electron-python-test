@@ -304,6 +304,94 @@
             flex: 1;
             min-height: 0;
         }
+        .logs-demo {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #1e1e1e;
+            padding: 0;
+        }
+        .logs-header {
+            padding: 15px 20px;
+            background-color: #2d2d2d;
+            border-bottom: 1px solid #3e3e3e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .logs-title {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .logs-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .logs-status {
+            color: #888;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logs-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+        .logs-button {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: #3e3e3e;
+            color: #fff;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .logs-button:hover {
+            background-color: #4e4e4e;
+        }
+        .logs-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.0;
+            color: #d4d4d4;
+        }
+        .log-entry {
+            padding: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .log-timestamp {
+            color: #858585;
+            margin-right: 10px;
+        }
+        .log-level-info {
+            color: #4ec9b0;
+        }
+        .log-level-warn {
+            color: #dcdcaa;
+        }
+        .log-level-error {
+            color: #f48771;
+        }
+        .log-level-debug {
+            color: #9cdcfe;
+        }
+        .log-message {
+            color: #d4d4d4;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -327,6 +415,10 @@
                 <div class="demo-item" data-demo="charts">
                     <div class="demo-item-title">Time Series Charts</div>
                     <div class="demo-item-description">Real-time data visualization</div>
+                </div>
+                <div class="demo-item" data-demo="logs">
+                    <div class="demo-item-title">Log Viewer</div>
+                    <div class="demo-item-description">Real-time log streaming</div>
                 </div>
             </div>
         </div>
@@ -405,6 +497,22 @@
                             <canvas id="users-chart" class="chart-canvas"></canvas>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div class="demo-content" id="logs-demo">
+                <div class="logs-demo">
+                    <div class="logs-header">
+                        <h2 class="logs-title">Application Logs</h2>
+                        <div class="logs-controls">
+                            <div class="logs-status">
+                                <span class="logs-indicator"></span>
+                                <span id="logs-status-text">Streaming...</span>
+                            </div>
+                            <button class="logs-button" id="clear-logs-btn">Clear</button>
+                            <button class="logs-button" id="pause-logs-btn">Pause</button>
+                        </div>
+                    </div>
+                    <div class="logs-container" id="logs-container"></div>
                 </div>
             </div>
         </div>

@@ -466,6 +466,170 @@ function cleanupCharts() {
     console.log('Charts cleaned up');
 }
 
+// Logs demo state
+let logsUpdateInterval = null;
+let logsPaused = false;
+let maxLogEntries = 500;
+
+/**
+ * Fetches log entries from Python backend
+ * @returns {Promise<Array>} Array of log entries
+ */
+async function fetchLogs() {
+    try {
+        const response = await fetch(`${backendUrl}/api/logs`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            return data.logs;
+        } else {
+            throw new Error(data.message || 'Failed to fetch logs');
+        }
+    } catch (error) {
+        console.error('Failed to fetch logs:', error);
+        return [];
+    }
+}
+
+/**
+ * Appends log entries to the log container
+ * @param {Array} logs - Array of log entries
+ */
+function appendLogs(logs) {
+    const container = document.getElementById('logs-container');
+    
+    logs.forEach(log => {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        
+        const timestamp = document.createElement('span');
+        timestamp.className = 'log-timestamp';
+        timestamp.textContent = log.timestamp;
+        
+        const level = document.createElement('span');
+        level.className = `log-level-${log.level.toLowerCase()}`;
+        level.textContent = `[${log.level}]`;
+        
+        const message = document.createElement('span');
+        message.className = 'log-message';
+        message.textContent = log.message;
+        
+        entry.appendChild(timestamp);
+        entry.appendChild(level);
+        entry.appendChild(document.createTextNode(' '));
+        entry.appendChild(message);
+        
+        container.appendChild(entry);
+    });
+    
+    // Trim old entries if exceeding max
+    while (container.children.length > maxLogEntries) {
+        container.removeChild(container.firstChild);
+    }
+    
+    // Auto-scroll to bottom if not paused
+    if (!logsPaused) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+/**
+ * Clears all log entries
+ */
+function clearLogs() {
+    const container = document.getElementById('logs-container');
+    container.innerHTML = '';
+    console.log('Logs cleared');
+}
+
+/**
+ * Toggles log streaming pause state
+ */
+function toggleLogsPause() {
+    logsPaused = !logsPaused;
+    const button = document.getElementById('pause-logs-btn');
+    const statusText = document.getElementById('logs-status-text');
+    
+    if (logsPaused) {
+        button.textContent = 'Resume';
+        statusText.textContent = 'Paused';
+    } else {
+        button.textContent = 'Pause';
+        statusText.textContent = 'Streaming...';
+        // Auto-scroll to bottom when resuming
+        const container = document.getElementById('logs-container');
+        container.scrollTop = container.scrollHeight;
+    }
+    
+    console.log(`Logs ${logsPaused ? 'paused' : 'resumed'}`);
+}
+
+/**
+ * Initializes the logs demo
+ */
+async function initLogs() {
+    console.log('Initializing logs demo...');
+    
+    // Don't clear existing logs - preserve them
+    logsPaused = false;
+    
+    // Update button states
+    const pauseButton = document.getElementById('pause-logs-btn');
+    const statusText = document.getElementById('logs-status-text');
+    pauseButton.textContent = 'Pause';
+    statusText.textContent = 'Streaming...';
+    
+    // Set up button handlers (only if not already set)
+    const clearButton = document.getElementById('clear-logs-btn');
+    if (!clearButton.onclick) {
+        clearButton.onclick = clearLogs;
+    }
+    if (!pauseButton.onclick) {
+        pauseButton.onclick = toggleLogsPause;
+    }
+    
+    // Fetch initial logs only if container is empty
+    const container = document.getElementById('logs-container');
+    if (container.children.length === 0) {
+        const logs = await fetchLogs();
+        appendLogs(logs);
+    }
+    
+    // Set up periodic updates
+    if (logsUpdateInterval) {
+        clearInterval(logsUpdateInterval);
+    }
+    
+    logsUpdateInterval = setInterval(async () => {
+        if (!logsPaused) {
+            const logs = await fetchLogs();
+            appendLogs(logs);
+        }
+    }, 2000);
+    
+    console.log('Logs initialized with 2-second update interval (preserving existing logs)');
+}
+
+/**
+ * Cleans up logs demo
+ */
+function cleanupLogs() {
+    if (logsUpdateInterval) {
+        clearInterval(logsUpdateInterval);
+        logsUpdateInterval = null;
+    }
+    
+    // Don't reset logsPaused - preserve pause state
+    // Don't clear logs - preserve them
+    
+    console.log('Logs paused (logs preserved)');
+}
+
 // Initialize demo navigation
 window.addEventListener('load', async () => {
     console.log('Window loaded, initializing demos...');
@@ -488,6 +652,14 @@ window.addEventListener('load', async () => {
             } else {
                 // Clean up charts when switching away
                 cleanupCharts();
+            }
+            
+            // Initialize logs when switching to it
+            if (demoId === 'logs') {
+                initLogs();
+            } else {
+                // Clean up logs when switching away
+                cleanupLogs();
             }
         });
     });
