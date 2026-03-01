@@ -357,7 +357,7 @@ function createChart(canvasId, label, borderColor, backgroundColor) {
                 borderColor: borderColor,
                 backgroundColor: backgroundColor,
                 borderWidth: 2,
-                tension: 0.4,
+                tension: 0,
                 fill: true
             }]
         },
