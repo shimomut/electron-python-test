@@ -4,7 +4,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Set application name for menu bar (must be before app.ready)
-app.setName('Demo Explorer');
+app.setName('Electron Python Demo');
 
 let pythonProcess = null;
 let mainWindow = null;
@@ -99,7 +99,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
-    title: 'Demo Explorer',
+    title: 'Electron Python Demo',
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false

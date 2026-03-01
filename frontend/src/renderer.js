@@ -1,4 +1,4 @@
-// Renderer process for Demo Explorer application
+// Renderer process for Electron Python Demo application
 // Handles demo navigation, HTTP communication with Python backend, and UI updates
 
 // Load configuration

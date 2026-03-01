@@ -1,6 +1,6 @@
 {
-  "name": "demo-explorer",
-  "productName": "Demo Explorer",
+  "name": "electron-python-demo",
+  "productName": "Electron Python Demo",
   "version": "1.0.0",
   "description": "A demo application showcasing Electron + Python integration with multiple interactive demos",
   "main": "frontend/src/main.js",
