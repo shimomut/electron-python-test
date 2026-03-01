@@ -2,31 +2,79 @@ const { app, BrowserWindow, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+
+// Load package.json to get app name
+const packageJson = require(path.join(__dirname, '..', '..', 'package.json'));
+const APP_NAME = packageJson.name;
 
 // Set application name for menu bar (must be before app.ready)
-app.setName('Electron Python Demo');
+app.setName(packageJson.productName || APP_NAME);
 
 let pythonProcess = null;
 let mainWindow = null;
 let config = null;
 
+// Default configuration
+const DEFAULT_CONFIG = {
+  backend: {
+    host: '127.0.0.1',
+    port: 10123
+  }
+};
+
 /**
- * Load configuration from config.json
+ * Get the config directory path based on app name
+ * @returns {string} Path to config directory
+ */
+function getConfigDir() {
+  return path.join(os.homedir(), `.${APP_NAME}`);
+}
+
+/**
+ * Get the config file path
+ * @returns {string} Path to config.json
+ */
+function getConfigPath() {
+  return path.join(getConfigDir(), 'config.json');
+}
+
+/**
+ * Ensure config directory exists
+ */
+function ensureConfigDir() {
+  const configDir = getConfigDir();
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true });
+    console.log(`Created config directory: ${configDir}`);
+  }
+}
+
+/**
+ * Load configuration from ~/.{app-name}/config.json
+ * Creates default config if it doesn't exist
  */
 function loadConfig() {
   try {
-    const configPath = path.join(__dirname, '..', '..', 'config.json');
-    const configData = fs.readFileSync(configPath, 'utf8');
-    config = JSON.parse(configData);
-    console.log(`Configuration loaded: Backend will use ${config.backend.host}:${config.backend.port}`);
+    ensureConfigDir();
+    const configPath = getConfigPath();
+    
+    if (!fs.existsSync(configPath)) {
+      // Create default config file
+      fs.writeFileSync(configPath, JSON.stringify(DEFAULT_CONFIG, null, 2), 'utf8');
+      console.log(`Created default config file: ${configPath}`);
+      config = DEFAULT_CONFIG;
+    } else {
+      // Load existing config
+      const configData = fs.readFileSync(configPath, 'utf8');
+      config = JSON.parse(configData);
+      console.log(`Configuration loaded from: ${configPath}`);
+    }
+    
+    console.log(`Backend will use ${config.backend.host}:${config.backend.port}`);
   } catch (error) {
-    console.error('Failed to load config.json, using defaults:', error);
-    config = {
-      backend: {
-        host: '127.0.0.1',
-        port: 10123
-      }
-    };
+    console.error('Failed to load or create config.json, using defaults:', error);
+    config = DEFAULT_CONFIG;
   }
 }
 
@@ -99,7 +147,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 600,
-    title: 'Electron Python Demo',
+    title: packageJson.productName || APP_NAME,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false
