@@ -165,6 +165,83 @@
             min-height: 50px;
             color: #333;
         }
+        .file-browser {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+        }
+        .file-browser-header {
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: bold;
+            color: #333;
+        }
+        .file-browser-columns {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        .file-column {
+            flex: 1;
+            min-width: 200px;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+            background-color: white;
+        }
+        .file-column:last-child {
+            border-right: none;
+        }
+        .file-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-item:hover {
+            background-color: #f8f9fa;
+        }
+        .file-item.selected {
+            background-color: #e7f3ff;
+            border-left: 3px solid #0066cc;
+        }
+        .file-item.has-children::after {
+            content: '›';
+            margin-left: auto;
+            color: #999;
+            font-size: 18px;
+        }
+        .file-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+        }
+        .file-icon.folder {
+            color: #ffc107;
+        }
+        .file-icon.folder::before {
+            content: '📁';
+        }
+        .file-icon.file::before {
+            content: '📄';
+        }
+        .file-name {
+            flex: 1;
+            font-size: 14px;
+            color: #333;
+        }
+        .file-browser-footer {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            font-size: 12px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -179,6 +256,10 @@
                 <div class="demo-item" data-demo="buttons">
                     <div class="demo-item-title">Buttons</div>
                     <div class="demo-item-description">Interactive button examples</div>
+                </div>
+                <div class="demo-item" data-demo="file-browser">
+                    <div class="demo-item-title">File Browser</div>
+                    <div class="demo-item-description">Multi-column file navigation</div>
                 </div>
             </div>
         </div>
@@ -205,6 +286,13 @@
                         </div>
                         <div id="button-output">Click a button to see the output</div>
                     </div>
+                </div>
+            </div>
+            <div class="demo-content" id="file-browser-demo">
+                <div class="file-browser">
+                    <div class="file-browser-header">File Browser - Multi-Column Navigation</div>
+                    <div class="file-browser-columns" id="file-columns"></div>
+                    <div class="file-browser-footer" id="file-path">Select a folder to navigate</div>
                 </div>
             </div>
         </div>
