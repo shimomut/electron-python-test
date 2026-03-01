@@ -249,7 +249,7 @@
             flex-direction: column;
             background-color: white;
             padding: 20px;
-            overflow: hidden;
+            overflow-y: auto;
         }
         .charts-header {
             margin-bottom: 20px;
@@ -280,10 +280,8 @@
         .charts-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
             gap: 20px;
-            flex: 1;
-            min-height: 0;
+            padding-bottom: 20px;
         }
         .chart-container {
             background-color: white;
@@ -292,7 +290,7 @@
             padding: 15px;
             display: flex;
             flex-direction: column;
-            min-height: 0;
+            height: 300px;
         }
         .chart-title {
             font-size: 16px;
@@ -389,6 +387,22 @@
                         <div class="chart-container">
                             <div class="chart-title">Request Rate (req/s)</div>
                             <canvas id="requests-chart" class="chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Disk I/O (MB/s)</div>
+                            <canvas id="disk-chart" class="chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Response Time (ms)</div>
+                            <canvas id="response-chart" class="chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Error Rate (%)</div>
+                            <canvas id="error-chart" class="chart-canvas"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">Active Users</div>
+                            <canvas id="users-chart" class="chart-canvas"></canvas>
                         </div>
                     </div>
                 </div>

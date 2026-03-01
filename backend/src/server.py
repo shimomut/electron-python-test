@@ -129,7 +129,11 @@ timeseries_history = {
     'cpu': [],
     'memory': [],
     'network': [],
-    'requests': []
+    'requests': [],
+    'disk_io': [],
+    'response_time': [],
+    'error_rate': [],
+    'active_users': []
 }
 MAX_HISTORY_POINTS = 60  # Keep last 60 data points (5 minutes at 5-second intervals)
 
@@ -167,33 +171,50 @@ def get_timeseries():
         requests = 50 + 30 * math.sin(elapsed / 8) + random.uniform(-10, 10)
         requests = round(max(0, requests), 2)
         
+        # Disk I/O: Bursty pattern (0-500 MB/s)
+        if random.random() > 0.8:
+            disk_io = random.uniform(300, 500)
+        else:
+            disk_io = 100 + 50 * math.sin(elapsed / 12) + random.uniform(-20, 20)
+        disk_io = round(max(0, disk_io), 2)
+        
+        # Response Time: Inverse correlation with load (50-500 ms)
+        response_time = 200 + 150 * math.sin(elapsed / 7) + random.uniform(-30, 30)
+        response_time = round(max(50, response_time), 2)
+        
+        # Error Rate: Occasional spikes (0-5%)
+        if random.random() > 0.9:
+            error_rate = random.uniform(2, 5)
+        else:
+            error_rate = 0.5 + 0.3 * math.sin(elapsed / 20) + random.uniform(-0.2, 0.2)
+        error_rate = round(max(0, min(5, error_rate)), 2)
+        
+        # Active Users: Gradual changes (100-1000 users)
+        active_users = 500 + 300 * math.sin(elapsed / 25) + random.uniform(-50, 50)
+        active_users = round(max(0, active_users))
+        
         # Add new data point to history
         timeseries_history['timestamps'].append(timestamp)
         timeseries_history['cpu'].append(cpu)
         timeseries_history['memory'].append(memory)
         timeseries_history['network'].append(network)
         timeseries_history['requests'].append(requests)
+        timeseries_history['disk_io'].append(disk_io)
+        timeseries_history['response_time'].append(response_time)
+        timeseries_history['error_rate'].append(error_rate)
+        timeseries_history['active_users'].append(active_users)
         
         # Trim history to max points
         if len(timeseries_history['timestamps']) > MAX_HISTORY_POINTS:
-            timeseries_history['timestamps'] = timeseries_history['timestamps'][-MAX_HISTORY_POINTS:]
-            timeseries_history['cpu'] = timeseries_history['cpu'][-MAX_HISTORY_POINTS:]
-            timeseries_history['memory'] = timeseries_history['memory'][-MAX_HISTORY_POINTS:]
-            timeseries_history['network'] = timeseries_history['network'][-MAX_HISTORY_POINTS:]
-            timeseries_history['requests'] = timeseries_history['requests'][-MAX_HISTORY_POINTS:]
+            for key in timeseries_history:
+                timeseries_history[key] = timeseries_history[key][-MAX_HISTORY_POINTS:]
         
         logger.info(f"Generated time series data point (total: {len(timeseries_history['timestamps'])} points)")
         
         return jsonify({
             "status": "success",
             "timestamp": current_time,
-            "data": {
-                "labels": timeseries_history['timestamps'],
-                "cpu": timeseries_history['cpu'],
-                "memory": timeseries_history['memory'],
-                "network": timeseries_history['network'],
-                "requests": timeseries_history['requests']
-            }
+            "data": timeseries_history
         })
         
     except Exception as e:

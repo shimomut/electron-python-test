@@ -365,25 +365,47 @@ async function fetchTimeSeriesData() {
 function updateCharts(data) {
     if (!data) return;
     
+    const labels = data.timestamps || data.labels;
+    
     // Update CPU chart
-    charts.cpu.data.labels = data.labels;
+    charts.cpu.data.labels = labels;
     charts.cpu.data.datasets[0].data = data.cpu;
     charts.cpu.update();
     
     // Update Memory chart
-    charts.memory.data.labels = data.labels;
+    charts.memory.data.labels = labels;
     charts.memory.data.datasets[0].data = data.memory;
     charts.memory.update();
     
     // Update Network chart
-    charts.network.data.labels = data.labels;
+    charts.network.data.labels = labels;
     charts.network.data.datasets[0].data = data.network;
     charts.network.update();
     
     // Update Requests chart
-    charts.requests.data.labels = data.labels;
+    charts.requests.data.labels = labels;
     charts.requests.data.datasets[0].data = data.requests;
     charts.requests.update();
+    
+    // Update Disk I/O chart
+    charts.disk.data.labels = labels;
+    charts.disk.data.datasets[0].data = data.disk_io;
+    charts.disk.update();
+    
+    // Update Response Time chart
+    charts.response.data.labels = labels;
+    charts.response.data.datasets[0].data = data.response_time;
+    charts.response.update();
+    
+    // Update Error Rate chart
+    charts.error.data.labels = labels;
+    charts.error.data.datasets[0].data = data.error_rate;
+    charts.error.update();
+    
+    // Update Active Users chart
+    charts.users.data.labels = labels;
+    charts.users.data.datasets[0].data = data.active_users;
+    charts.users.update();
     
     // Update status
     const statusElement = document.getElementById('update-status');
@@ -402,6 +424,10 @@ async function initCharts() {
     charts.memory = createChart('memory-chart', 'Memory Usage', 'rgb(255, 99, 132)', 'rgba(255, 99, 132, 0.1)');
     charts.network = createChart('network-chart', 'Network Traffic', 'rgb(75, 192, 192)', 'rgba(75, 192, 192, 0.1)');
     charts.requests = createChart('requests-chart', 'Request Rate', 'rgb(255, 159, 64)', 'rgba(255, 159, 64, 0.1)');
+    charts.disk = createChart('disk-chart', 'Disk I/O', 'rgb(153, 102, 255)', 'rgba(153, 102, 255, 0.1)');
+    charts.response = createChart('response-chart', 'Response Time', 'rgb(255, 205, 86)', 'rgba(255, 205, 86, 0.1)');
+    charts.error = createChart('error-chart', 'Error Rate', 'rgb(255, 99, 71)', 'rgba(255, 99, 71, 0.1)');
+    charts.users = createChart('users-chart', 'Active Users', 'rgb(34, 139, 34)', 'rgba(34, 139, 34, 0.1)');
     
     // Fetch initial data
     const data = await fetchTimeSeriesData();
