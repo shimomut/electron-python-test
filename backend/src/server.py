@@ -124,63 +124,75 @@ def list_files():
 
 # Time series data generation state
 timeseries_start_time = time.time()
+timeseries_history = {
+    'timestamps': [],
+    'cpu': [],
+    'memory': [],
+    'network': [],
+    'requests': []
+}
+MAX_HISTORY_POINTS = 60  # Keep last 60 data points (5 minutes at 5-second intervals)
 
 
 @app.route('/api/timeseries', methods=['GET'])
 def get_timeseries():
     """Generate synthetic time series data for visualization."""
     try:
-        # Get current time offset
-        elapsed = time.time() - timeseries_start_time
+        global timeseries_history
         
-        # Generate timestamps for the last 60 seconds
-        num_points = 20
-        timestamps = []
+        # Get current time
         current_time = time.time()
+        elapsed = current_time - timeseries_start_time
         
-        for i in range(num_points):
-            t = current_time - (num_points - i - 1) * 3
-            timestamps.append(time.strftime('%H:%M:%S', time.localtime(t)))
+        # Generate new timestamp
+        timestamp = time.strftime('%H:%M:%S', time.localtime(current_time))
         
-        # Generate synthetic data with different patterns
-        cpu_data = []
-        memory_data = []
-        network_data = []
-        requests_data = []
+        # Generate new data point with different patterns
+        # CPU: Sine wave with noise (30-80%)
+        cpu = 55 + 25 * math.sin(elapsed / 10) + random.uniform(-5, 5)
+        cpu = round(max(0, min(100, cpu)), 2)
         
-        for i in range(num_points):
-            t = elapsed + i * 3
-            
-            # CPU: Sine wave with noise (30-80%)
-            cpu = 55 + 25 * math.sin(t / 10) + random.uniform(-5, 5)
-            cpu_data.append(round(max(0, min(100, cpu)), 2))
-            
-            # Memory: Gradual increase with noise (200-800 MB)
-            memory = 500 + 150 * math.sin(t / 15) + random.uniform(-30, 30)
-            memory_data.append(round(max(0, memory), 2))
-            
-            # Network: Random spikes (0-1000 KB/s)
-            if random.random() > 0.7:
-                network = random.uniform(500, 1000)
-            else:
-                network = random.uniform(50, 300)
-            network_data.append(round(network, 2))
-            
-            # Requests: Poisson-like distribution (10-100 req/s)
-            requests = 50 + 30 * math.sin(t / 8) + random.uniform(-10, 10)
-            requests_data.append(round(max(0, requests), 2))
+        # Memory: Gradual increase with noise (200-800 MB)
+        memory = 500 + 150 * math.sin(elapsed / 15) + random.uniform(-30, 30)
+        memory = round(max(0, memory), 2)
         
-        logger.info("Generated time series data")
+        # Network: Random spikes (0-1000 KB/s)
+        if random.random() > 0.7:
+            network = random.uniform(500, 1000)
+        else:
+            network = random.uniform(50, 300)
+        network = round(network, 2)
+        
+        # Requests: Poisson-like distribution (10-100 req/s)
+        requests = 50 + 30 * math.sin(elapsed / 8) + random.uniform(-10, 10)
+        requests = round(max(0, requests), 2)
+        
+        # Add new data point to history
+        timeseries_history['timestamps'].append(timestamp)
+        timeseries_history['cpu'].append(cpu)
+        timeseries_history['memory'].append(memory)
+        timeseries_history['network'].append(network)
+        timeseries_history['requests'].append(requests)
+        
+        # Trim history to max points
+        if len(timeseries_history['timestamps']) > MAX_HISTORY_POINTS:
+            timeseries_history['timestamps'] = timeseries_history['timestamps'][-MAX_HISTORY_POINTS:]
+            timeseries_history['cpu'] = timeseries_history['cpu'][-MAX_HISTORY_POINTS:]
+            timeseries_history['memory'] = timeseries_history['memory'][-MAX_HISTORY_POINTS:]
+            timeseries_history['network'] = timeseries_history['network'][-MAX_HISTORY_POINTS:]
+            timeseries_history['requests'] = timeseries_history['requests'][-MAX_HISTORY_POINTS:]
+        
+        logger.info(f"Generated time series data point (total: {len(timeseries_history['timestamps'])} points)")
         
         return jsonify({
             "status": "success",
-            "timestamp": time.time(),
+            "timestamp": current_time,
             "data": {
-                "labels": timestamps,
-                "cpu": cpu_data,
-                "memory": memory_data,
-                "network": network_data,
-                "requests": requests_data
+                "labels": timeseries_history['timestamps'],
+                "cpu": timeseries_history['cpu'],
+                "memory": timeseries_history['memory'],
+                "network": timeseries_history['network'],
+                "requests": timeseries_history['requests']
             }
         })
         
