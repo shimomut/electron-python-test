@@ -519,6 +519,40 @@ let logsUpdateInterval = null;
 let logsPaused = false;
 let maxLogEntries = 500;
 
+// 3D graphics state
+let graphics3d = null;
+
+/**
+ * Initializes the 3D graphics demo
+ */
+function initGraphics3D() {
+    console.log('Initializing 3D graphics demo...');
+    
+    if (graphics3d) {
+        graphics3d.dispose();
+    }
+    
+    // Graphics3D is loaded from graphics3d.js module and attached to window
+    if (typeof window.Graphics3D !== 'undefined') {
+        graphics3d = new window.Graphics3D('graphics-container');
+        graphics3d.init();
+        console.log('3D graphics initialized');
+    } else {
+        console.error('Graphics3D class not found - module may not have loaded yet');
+    }
+}
+
+/**
+ * Cleans up 3D graphics demo
+ */
+function cleanupGraphics3D() {
+    if (graphics3d) {
+        graphics3d.dispose();
+        graphics3d = null;
+        console.log('3D graphics cleaned up');
+    }
+}
+
 /**
  * Fetches log entries from Python backend
  * @returns {Promise<Array>} Array of log entries
@@ -711,6 +745,14 @@ window.addEventListener('load', async () => {
             } else {
                 // Clean up logs when switching away
                 cleanupLogs();
+            }
+            
+            // Initialize 3D graphics when switching to it
+            if (demoId === 'graphics3d') {
+                initGraphics3D();
+            } else {
+                // Clean up 3D graphics when switching away
+                cleanupGraphics3D();
             }
         });
     });
